@@ -1,26 +1,53 @@
-
 networks:
   application-net:
     driver: bridge
 
 services:
 
+  user-service:
+    build: ./user-service
+    container_name: telegram-user-service
+    restart: unless-stopped
+    ports:
+      - "8081:8081"
+    environment:
+      USER_SERVICE_DATASOURCE_URL: jdbc:postgresql://user-db:5432/user-service-db  # ← Ключевое изменение!
+      USER_SERVICE_DATASOURCE_USERNAME: postgres
+      USER_SERVICE_DATASOURCE_PASSWORD: postgres
+    depends_on:
+      user-db:
+        condition: service_healthy
+    networks:
+      - application-net
+#    healthcheck:
+#      test: [ "CMD", "curl", "-f", "http://localhost:8081/actuator/health" ]
+#      interval: 30s
+#      timeout: 10s
+#      retries: 3
+#      start_period: 40s
+
+
   user-db:
     image: postgres:latest
     container_name: user-db
-    restart: always
+    restart: unless-stopped
     ports:
       - "5432:5432"
     environment:
       POSTGRES_USER: postgres
       POSTGRES_PASSWORD: postgres
-      POSTGRES_DB: user-service
+      POSTGRES_DB: user-service-db
     networks:
       - application-net
+    volumes:
+      - user-db-data:/var/lib/postgresql
     healthcheck:
-      test: [ "CMD-SHELL", "pg_isready -U postgres -d user-db" ]
+      test: [ "CMD-SHELL", "pg_isready -U postgres -d user-service-db" ]
       interval: 10s          # Интервал между проверками (здесь каждые 10 секунд)
       timeout: 5s            # Таймаут команды проверки
       retries: 3             # Количество попыток перед тем, как контейнер будет помечен как unhealthy
       start_period: 30s      # Время ожидания перед первой проверкой (например, пока база поднимается)
 
+
+volumes:
+  user-db-data:  # Персистентное хранилище для БД
