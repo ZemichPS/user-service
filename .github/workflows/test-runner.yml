@@ -1,0 +1,17 @@
+name: Test Runner Connection
+on: [workflow_dispatch]  # Ручной запуск
+
+jobs:
+  test:
+    runs-on: self-hosted
+    steps:
+      - name: Print system info
+        run: |
+          echo "🎉 Runner is working!"
+          echo "Hostname: $(hostname)"
+          echo "Time: $(date)"
+          echo "Directory: $(pwd)"
+          echo "User: $(whoami)"
+          echo "---"
+          docker --version
+          docker-compose --version
